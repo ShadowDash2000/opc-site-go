@@ -12,6 +12,10 @@ func (ui *UserInteractor) Login(user *model.User) bool {
 	return ui.UserRepository.Authorize(user)
 }
 
-func (ui *UserInteractor) Logout() bool {
-	return ui.UserRepository.Logout()
+func (ui *UserInteractor) Register(user *model.User) bool {
+	return ui.UserRepository.Add(user)
+}
+
+func (ui *UserInteractor) GetUserById(userId int) *model.User {
+	return ui.UserRepository.GetUserById(userId)
 }

@@ -16,8 +16,6 @@ type UserController struct {
 	SessionController *SessionController
 }
 
-const usersTableName = "users"
-
 func NewUserController(sqlHandler SQLHandler) *UserController {
 	return &UserController{
 		UserInteractor: usecase.UserInteractor{
@@ -42,7 +40,7 @@ func (uc *UserController) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionCookie, err := r.Cookie(uc.SessionController.GetCookieName())
-	if err != nil || len(sessionCookie.Value) > 0 {
+	if err == nil && len(sessionCookie.Value) > 0 {
 		http.Error(w, "400", http.StatusBadRequest)
 		return
 	}
@@ -66,6 +64,33 @@ func (uc *UserController) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, "401", http.StatusUnauthorized)
+}
+
+func (uc *UserController) HandleRegistration(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "405", http.StatusMethodNotAllowed)
+		return
+	}
+
+	sessionCookie, err := r.Cookie(uc.SessionController.GetCookieName())
+	if err == nil && len(sessionCookie.Value) > 0 {
+		http.Error(w, "400", http.StatusBadRequest)
+		return
+	}
+
+	var user model.User
+	err = json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, "400", http.StatusBadRequest)
+		return
+	}
+
+	if uc.UserInteractor.Register(&user) {
+		uc.SessionController.Set(&w, user.Id)
+		return
+	}
+
+	http.Error(w, "409", http.StatusConflict)
 }
 
 func (uc *UserController) HandleLogout(w http.ResponseWriter, r *http.Request) {

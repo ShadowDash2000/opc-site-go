@@ -1,43 +1,35 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"opc-site/app/controller"
-	"strings"
+	"os"
 )
 
-func handleApi(w http.ResponseWriter, r *http.Request) {
-	/**
-	TODO вынести API Handler в свое пространство
-	*/
-	/*sessionController := &controller.SessionController{}
-	if !sessionController.CheckSession(&w, r) {
-		http.Error(w, "401", http.StatusUnauthorized)
-	}*/
+const publicDir = "app/public/"
 
-	path := r.URL.Path
-	trimmedPath := path[len("/api/"):]
-	trimmedPath = strings.TrimSuffix(trimmedPath, "/")
-
-	switch trimmedPath {
-	case "test":
-		// some method...
-	}
-
-	fmt.Println("Запрос к:", trimmedPath)
+func handleIndex(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, publicDir+"index.html")
 }
 
 func main() {
+	appIp := os.Getenv("APP_IP")
+	appPort := os.Getenv("APP_PORT")
+
 	sqlHandler := controller.NewSqlHandler()
 	defer sqlHandler.Db.Close()
 	userController := controller.NewUserController(*sqlHandler)
 
 	http.HandleFunc("/login", userController.HandleLogin)
 	http.HandleFunc("/logout", userController.HandleLogout)
-	http.HandleFunc("/api/", handleApi)
+	http.HandleFunc("/registration", userController.HandleRegistration)
 
-	err := http.ListenAndServe(":25565", nil)
+	apiController := controller.NewApiController(*sqlHandler)
+	http.HandleFunc("/api/", apiController.HandleApi)
+
+	http.HandleFunc("/index", handleIndex)
+
+	err := http.ListenAndServe(appIp+":"+appPort, nil)
 	if err != nil {
 		return
 	}

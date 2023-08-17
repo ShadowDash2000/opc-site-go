@@ -7,5 +7,6 @@ import (
 type UserRepository interface {
 	Add(user *model.User) bool
 	Authorize(user *model.User) bool
-	Logout() bool
+	GetUserById(userId int) *model.User
+	ConvertPassword(password string) string
 }

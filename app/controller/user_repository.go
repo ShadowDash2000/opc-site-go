@@ -3,6 +3,7 @@ package controller
 import (
 	"crypto/md5"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"log"
 	"opc-site/app/model"
@@ -12,12 +13,13 @@ type UserRepository struct {
 	SQLHandler SQLHandler
 }
 
+const usersTableName = "users"
+
 func (ur *UserRepository) Add(user *model.User) bool {
-	query := "SELECT * FROM ? WHERE name=?"
+	query := "SELECT * FROM " + usersTableName + " WHERE name=?"
 	userInDb := &model.User{}
 	err := ur.SQLHandler.Db.QueryRow(
 		query,
-		usersTableName,
 		user.Name,
 	).Scan(
 		&userInDb.Id,
@@ -32,7 +34,7 @@ func (ur *UserRepository) Add(user *model.User) bool {
 	_, err = ur.SQLHandler.Db.Exec(
 		query,
 		user.Name,
-		md5.Sum([]byte(user.Password)),
+		ur.ConvertPassword(user.Password),
 	)
 	if err != nil {
 		log.Panic(err.Error())
@@ -42,6 +44,8 @@ func (ur *UserRepository) Add(user *model.User) bool {
 }
 
 func (ur *UserRepository) Authorize(user *model.User) bool {
+	user.Password = ur.ConvertPassword(user.Password)
+
 	query := "SELECT * FROM " + usersTableName + " WHERE name=? AND password=?"
 	err := ur.SQLHandler.Db.QueryRow(
 		query,
@@ -61,7 +65,26 @@ func (ur *UserRepository) Authorize(user *model.User) bool {
 	return true
 }
 
-func (ur *UserRepository) Logout() bool {
+func (ur *UserRepository) GetUserById(userId int) *model.User {
+	user := &model.User{}
+	query := "SELECT * FROM " + usersTableName + " WHERE id=?"
+	err := ur.SQLHandler.Db.QueryRow(
+		query,
+		userId,
+	).Scan(
+		&user.Id,
+		&user.Name,
+		&user.Password,
+	)
+	if err != nil {
+		log.Println("No user with ID")
+		return user
+	}
 
-	return true
+	return user
+}
+
+func (ur *UserRepository) ConvertPassword(password string) string {
+	passwordHash := md5.Sum([]byte(password))
+	return hex.EncodeToString(passwordHash[:])
 }

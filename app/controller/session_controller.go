@@ -50,17 +50,18 @@ func (sc *SessionController) Unset(w *http.ResponseWriter, sessionUuid string) {
 	})
 }
 
+func (sc *SessionController) GetCookie(r *http.Request) (*http.Cookie, error) {
+	return r.Cookie(sessionCookieName)
+}
+
 func (sc *SessionController) CheckSession(w *http.ResponseWriter, r *http.Request) bool {
-	sessionCookie, err := r.Cookie(sessionCookieName)
+	sessionCookie, err := sc.GetCookie(r)
 	if err != nil {
 		return false
 	}
 
-	session := sc.SessionInteractor.GetByUUID(sessionCookie.Value)
-	if session.Id <= 0 {
-		return false
-	} else if session.ExpirationTime.Before(time.Now()) {
-		sc.Unset(w, session.UUID)
+	if sc.SessionInteractor.IsValidSession(sessionCookie.Value) {
+		sc.Unset(w, sessionCookie.Value)
 		return false
 	}
 

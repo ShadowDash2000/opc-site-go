@@ -3,7 +3,9 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"net/http"
+	"opc-site/app/model"
 	"opc-site/app/usecase"
 	"strconv"
 	"strings"
@@ -12,6 +14,8 @@ import (
 type ApiController struct {
 	SQLHandler        SQLHandler
 	SessionController *SessionController
+	SocketController  *SocketController
+	ChatController    *ChatController
 }
 
 func NewApiController(sqlHandler SQLHandler) *ApiController {
@@ -24,21 +28,21 @@ func NewApiController(sqlHandler SQLHandler) *ApiController {
 				},
 			},
 		},
+		SocketController: NewSocketController(),
+		ChatController:   NewChatController(sqlHandler),
 	}
 }
 
 func (ac *ApiController) HandleApi(w http.ResponseWriter, r *http.Request) {
-	if !ac.SessionController.CheckSession(&w, r) {
-		http.Error(w, "401", http.StatusUnauthorized)
-	}
-
 	path := r.URL.Path
 	trimmedPath := path[len("/api/"):]
 	trimmedPath = strings.TrimSuffix(trimmedPath, "/")
 
 	switch trimmedPath {
-	case "get-user":
+	case "user/get-user":
 		ac.HandleGetUserById(w, r)
+	case "chat":
+		ac.SendChatMessage(w, r)
 	}
 
 	fmt.Println("Запрос к:", trimmedPath)
@@ -82,4 +86,28 @@ func (ac *ApiController) HandleGetUserById(w http.ResponseWriter, r *http.Reques
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(userJson)
+}
+
+func (ac *ApiController) SendChatMessage(w http.ResponseWriter, r *http.Request) {
+	ac.SocketController.HandleConnection(w, r, func(messageText string, conn *websocket.Conn) {
+		sessionCookie, err := ac.SessionController.GetCookie(r)
+		if err != nil {
+			return
+		}
+
+		if !ac.SessionController.SessionInteractor.IsValidSession(sessionCookie.Value) {
+			return
+		}
+		session := ac.SessionController.SessionInteractor.GetByUUID(sessionCookie.Value)
+
+		message := &model.Message{}
+		err = json.Unmarshal([]byte(messageText), &message)
+		if err != nil {
+			return
+		}
+
+		message = ac.ChatController.Send(session.UserId, message.Text)
+		messageJson, err := json.Marshal(message)
+		ac.SocketController.SendMessage(string(messageJson))
+	})
 }

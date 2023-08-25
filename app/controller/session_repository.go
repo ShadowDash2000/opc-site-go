@@ -4,6 +4,7 @@ import (
 	_ "github.com/google/uuid"
 	"log"
 	"opc-site/app/model"
+	"time"
 )
 
 type SessionRepository struct {
@@ -39,7 +40,7 @@ func (sr *SessionRepository) RemoveFromDb(uuid string) {
 func (sr *SessionRepository) GetByUUID(uuid string) *model.Session {
 	query := "SELECT * FROM " + sessionsTableName + " WHERE uuid=?"
 	session := &model.Session{}
-	err := sr.SQLHandler.Db.QueryRow(
+	sr.SQLHandler.Db.QueryRow(
 		query,
 		uuid,
 	).Scan(
@@ -49,9 +50,16 @@ func (sr *SessionRepository) GetByUUID(uuid string) *model.Session {
 		&session.UUID,
 	)
 
-	if err != nil {
-		log.Panic(err)
+	return session
+}
+
+func (sr *SessionRepository) IsValidSession(uuid string) bool {
+	session := sr.GetByUUID(uuid)
+	if session.Id <= 0 {
+		return false
+	} else if session.ExpirationTime.Before(time.Now()) {
+		return false
 	}
 
-	return session
+	return true
 }

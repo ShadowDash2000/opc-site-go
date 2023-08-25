@@ -40,7 +40,7 @@ func (uc *UserController) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionCookie, err := r.Cookie(uc.SessionController.GetCookieName())
-	if err == nil && len(sessionCookie.Value) > 0 {
+	if err == nil && uc.SessionController.SessionInteractor.IsValidSession(sessionCookie.Value) {
 		http.Error(w, "400", http.StatusBadRequest)
 		return
 	}

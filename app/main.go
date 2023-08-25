@@ -13,13 +13,19 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	appIp := os.Getenv("APP_IP")
-	appPort := os.Getenv("APP_PORT")
+	appIp, ok := os.LookupEnv("APP_IP")
+	if !ok {
+		appIp = "localhost"
+	}
+	appPort, ok := os.LookupEnv("APP_PORT")
+	if !ok {
+		appPort = "25565"
+	}
 
 	sqlHandler := controller.NewSqlHandler()
 	defer sqlHandler.Db.Close()
-	userController := controller.NewUserController(*sqlHandler)
 
+	userController := controller.NewUserController(*sqlHandler)
 	http.HandleFunc("/login", userController.HandleLogin)
 	http.HandleFunc("/logout", userController.HandleLogout)
 	http.HandleFunc("/registration", userController.HandleRegistration)

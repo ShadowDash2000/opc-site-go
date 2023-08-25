@@ -10,9 +10,18 @@ CREATE TABLE
     IF NOT EXISTS `sessions`
 (
     `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `userId` INT NOT NULL,
+    `userId` INT(11) NOT NULL,
     `expirationTime` DATETIME NOT NULL,
     `uuid` TEXT NOT NULL
 
+) ENGINE = InnoDB DEFAULT CHARSET = utf8
+;
+CREATE TABLE
+    IF NOT EXISTS  `messages`
+(
+    `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `userId` INT(11) NOT NULL,
+    `text` TEXT NOT NULL,
+    `time` DATETIME NOT NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8
 ;

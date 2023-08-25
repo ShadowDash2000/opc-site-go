@@ -19,3 +19,7 @@ func (si *SessionInteractor) RemoveFromDb(uuid string) {
 func (si *SessionInteractor) GetByUUID(uuid string) *model.Session {
 	return si.SessionRepository.GetByUUID(uuid)
 }
+
+func (si *SessionInteractor) IsValidSession(uuid string) bool {
+	return si.SessionRepository.IsValidSession(uuid)
+}

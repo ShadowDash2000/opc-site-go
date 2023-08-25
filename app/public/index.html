@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+</head>
+<body>
+<h1>Hello!</h1>
+<button id="socket-send">SEND</button>
+<form id="login" action="/login" method="POST">
+    <input type="text" name="name">
+    <input type="password" name="password">
+    <input type="submit">
+</form>
+<form id="message" method="POST">
+    <textarea name="text"></textarea>
+    <input type="submit">
+</form>
+</body>
+<script>
+    document.querySelector('#login').addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Получение данных формы
+        const formData = new FormData(e.currentTarget);
+        const data = {};
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+
+        // Отправка AJAX-запроса
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/login');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                window.location.reload();
+            } else {
+                console.error('Ошибка:', xhr.status);
+            }
+        };
+        xhr.send(JSON.stringify(data));
+    });
+
+    document.querySelector('#message').addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Получение данных формы
+        const formData = new FormData(e.currentTarget);
+        const data = {};
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+
+        socket.send(JSON.stringify(data));
+    });
+
+    // Создание WebSocket соединения
+    const socket = new WebSocket('ws://localhost:25565/api/chat/');
+
+    // Обработка события открытия соединения
+    socket.onopen = function() {
+        console.log('WebSocket connection established.');
+    };
+
+    // Обработка события получения сообщения от сервера
+    socket.onmessage = function(event) {
+        const message = event.data;
+        console.log('Received message:');
+        console.log(JSON.parse(message))
+    };
+    document.querySelector('#socket-send').addEventListener('click', () => {
+        // Отправка сообщения на сервер
+        socket.send('Hello, server!');
+    });
+</script>
+</html>

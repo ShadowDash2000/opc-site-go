@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"net/http"
 	"opc-site/app/model"
 	"opc-site/app/usecase"
 )
@@ -26,6 +25,6 @@ func (cc *ChatController) Send(userId int, messageText string) *model.Message {
 	return cc.ChatInteractor.Send(userId, messageText)
 }
 
-func (cc *ChatController) Get(w http.ResponseWriter, r *http.Request) {
-
+func (cc *ChatController) Get(messageId int) *model.Message {
+	return cc.ChatInteractor.Get(messageId)
 }

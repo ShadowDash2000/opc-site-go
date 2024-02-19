@@ -7,7 +7,14 @@
 <body>
 <h1>Hello!</h1>
 <button id="socket-send">SEND</button>
+<span>LOGIN</span>
 <form id="login" action="/login" method="POST">
+    <input type="text" name="name">
+    <input type="password" name="password">
+    <input type="submit">
+</form>
+<span>REGISTER</span>
+<form id="registration" action="/registration" method="POST">
     <input type="text" name="name">
     <input type="password" name="password">
     <input type="submit">
@@ -31,6 +38,30 @@
         // Отправка AJAX-запроса
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/login');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                window.location.reload();
+            } else {
+                console.error('Ошибка:', xhr.status);
+            }
+        };
+        xhr.send(JSON.stringify(data));
+    });
+
+    document.querySelector('#registration').addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Получение данных формы
+        const formData = new FormData(e.currentTarget);
+        const data = {};
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+
+        // Отправка AJAX-запроса
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/registration');
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onload = function() {
             if (xhr.status === 200) {

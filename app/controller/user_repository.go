@@ -40,6 +40,21 @@ func (ur *UserRepository) Add(user *model.User) bool {
 		log.Panic(err.Error())
 	}
 
+	query = "SELECT * FROM " + usersTableName + " WHERE name=?"
+
+	err = ur.SQLHandler.Db.QueryRow(
+		query,
+		user.Name,
+	).Scan(
+		&user.Id,
+		&user.Name,
+		&user.Password,
+	)
+	log.Print(user)
+	if err != nil {
+		return false
+	}
+
 	return true
 }
 
